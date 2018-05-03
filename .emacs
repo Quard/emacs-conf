@@ -10,10 +10,16 @@
     ("8aebf25556399b58091e533e455dd50a6a9cba958cc4ebb0aab175863c25b9a4" "d677ef584c6dfc0697901a44b885cc18e206f05114c8a3b7fde674fce6180879" default)))
  '(global-linum-mode 1)
  '(line-number-mode 1)
- '(org-agenda-files (quote ("~/Dropbox/notes.org")))
+ '(org-agenda-files
+   (quote
+    ("~/Dropbox/org/self_build.org" "~/Dropbox/org/articles.org" "~/Dropbox/org/notes.org")))
+ '(package-selected-packages
+   (quote
+    (direx doom-themes smart-mode-line-powerline-theme smart-mode-line git-gutter jsx-mode websocket markdown-mode yaml-mode projectile flycheck flymake-cursor solarized-theme fill-column-indicator ag smartparens jedi epc pyvenv slime)))
  '(show-paren-mode t)
  '(word-wrap nil))
 
+(add-to-list 'exec-path "/usr/local/bin/")
 (tool-bar-mode -1)
 (scroll-bar-mode -1)
 (fset 'yeas-or-no-p 'y-or-n-p)
@@ -36,7 +42,6 @@
                             fill-column-indicator
                             solarized-theme
                             flymake-cursor
-                            exec-path-from-shell
                             flycheck
                             projectile))
 
@@ -71,6 +76,12 @@
 (define-globalized-minor-mode global-fci-mode fci-mode (lambda () (fci-mode 1)))
 (global-fci-mode 1)
 
+;; hightlight 120
+(add-to-list 'load-path "~/.emacs.d/column-enforce-mode/")
+(setq column-enforce-column 120)
+(require 'column-enforce-mode)
+(add-hook 'prog-mode-hook 'column-enforce-mode)
+
 ;; flymake
 (require 'tramp-cmds)
 (when (load "flymake" t)
@@ -90,7 +101,12 @@
 (require 'flymake)
 (require 'flymake-cursor)
 
-(add-hook 'after-init-hook #'global-flycheck-mode)
+;; flycheck
+;; (require 'flycheck)
+;; (add-hook 'after-init-hook #'global-flycheck-mode)
+;; (flycheck-add-mode 'javascript-eslint 'javascript-mode)
+;; (when (memq window-system '(mac ns))
+;;   (exec-path-from-shell-initialize))
 
 ;; keys
 (global-set-key (kbd "C-c a") 'org-agenda-list)
@@ -114,9 +130,12 @@
 (setq jedi:setup-keys t)
 (setq jedi:complete-on-dot t)
 (add-hook 'python-mode-hook 'jedi:setup)
+(require 'jedi-direx)
+(add-hook 'jedi-mode-hook 'jedi-direx:setup)
 
 ;; theme
-(set-face-font 'default "-unknown-Inconsolata-normal-normal-normal-*-14-*-*-*-m-0-iso10646-1")
+(set-face-font 'default "Inconsolata-14")
+;; (set-face-font 'default "-unknown-Inconsolata-normal-normal-normal-*-14-*-*-*-m-0-iso10646-1")
 ;; (set-fontset-font "fontset-default"
 ;;                   (cons (decode-char 'ucs #x0400)
 ;;                         (decode-char 'ucs #x052F))
@@ -137,3 +156,9 @@
 (add-hook 'lisp-mode-hook 'my-pretty-lambda)
 (add-hook 'python-mode-hook 'my-pretty-lambda)
 (global-prettify-symbols-mode 1)
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
