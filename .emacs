@@ -15,7 +15,7 @@
     ("~/Dropbox/org/self_build.org" "~/Dropbox/org/articles.org" "~/Dropbox/org/notes.org")))
  '(package-selected-packages
    (quote
-    (direx doom-themes smart-mode-line-powerline-theme smart-mode-line git-gutter jsx-mode websocket markdown-mode yaml-mode projectile flycheck flymake-cursor solarized-theme fill-column-indicator ag smartparens jedi epc pyvenv slime)))
+    (irony platformio-mode direx doom-themes smart-mode-line-powerline-theme smart-mode-line git-gutter jsx-mode websocket markdown-mode yaml-mode projectile flycheck flymake-cursor solarized-theme fill-column-indicator ag smartparens jedi epc pyvenv slime)))
  '(show-paren-mode t)
  '(word-wrap nil))
 
@@ -34,16 +34,14 @@
 
 (defvar required-packages '(slime
                             pyvenv
-                            epc
-                            jedi
                             smartparens
-                            auto-complete
                             ag
                             fill-column-indicator
                             solarized-theme
-                            flymake-cursor
                             flycheck
-                            projectile))
+                            projectile
+                            company
+                            company-anaconda))
 
 ; fetch the list of packages available
 (unless package-archive-contents
@@ -66,75 +64,66 @@
       '(trailing space-before-tab indentation empty space-after-tab)) ;; only show bad whitespace
 (global-whitespace-mode 1)
 
+(add-hook 'after-init-hook 'global-company-mode)
 (projectile-global-mode 1)
 
-;; hightlight 80
+;; --- hightlight 80 ---
 (setq-default fill-column 80)
 (require 'fill-column-indicator)
 (setq fci-rule-width 1)
 (setq fci-rule-color "DodgerBlue4")
 (define-globalized-minor-mode global-fci-mode fci-mode (lambda () (fci-mode 1)))
+;; fix company popup
+(defun on-off-fci-before-company(command)
+  (when (string= "show" command)
+    (turn-off-fci-mode))
+  (when (string= "hide" command)
+    (turn-on-fci-mode)))
+(advice-add 'company-call-frontends :before #'on-off-fci-before-company)
 (global-fci-mode 1)
 
-;; hightlight 120
+;; --- hightlight 120 ---
 (add-to-list 'load-path "~/.emacs.d/column-enforce-mode/")
 (setq column-enforce-column 120)
 (require 'column-enforce-mode)
 (add-hook 'prog-mode-hook 'column-enforce-mode)
 
-;; flymake
-(require 'tramp-cmds)
-(when (load "flymake" t)
-  (defun flymake-pyflakes-init ()
-     ; Make sure it's not a remote buffer or flymake would not work
-     (when (not (subsetp (list (current-buffer)) (tramp-list-remote-buffers)))
-      (let* ((temp-file (flymake-init-create-temp-buffer-copy
-             'flymake-create-temp-inplace))
-         (local-file (file-relative-name
-              temp-file
-              (file-name-directory buffer-file-name))))
-    (list "pyflakes" (list local-file)))))
-  (add-to-list 'flymake-allowed-file-name-masks
-           '("\\.py\\'" flymake-pyflakes-init)))
-(delete '("\\.html?\\'" flymake-xml-init) flymake-allowed-file-name-masks)
-(add-hook 'find-file-hook 'flymake-find-file-hook)
-(require 'flymake)
-(require 'flymake-cursor)
 
-;; flycheck
-;; (require 'flycheck)
-;; (add-hook 'after-init-hook #'global-flycheck-mode)
-;; (flycheck-add-mode 'javascript-eslint 'javascript-mode)
-;; (when (memq window-system '(mac ns))
-;;   (exec-path-from-shell-initialize))
+;; --- flycheck ---
+(add-hook 'after-init-hook #'global-flycheck-mode)
 
-;; keys
+;; --- keys ---
 (global-set-key (kbd "C-c a") 'org-agenda-list)
 (if (eq system-type 'gnu/linux)
     (progn
       (global-set-key (kbd "M-l") 'goto-line)))
 
-;; lisp
+;; --- lisp ---
 (require 'cl)
 (if (eq system-type 'darwin)
     (setq inferior-lisp-program "/usr/local/bin/ccl"))
 (if (eq system-type 'gnu/linux)
     (setq inferior-lisp-program "/usr/bin/sbcl"))
 
-;; python
+;; --- python ---
 (add-hook 'python-mode-hook '(lambda ()
     (define-key python-mode-map (kbd "RET") 'newline-and-indent)))
 ;; (add-hook 'python-mode-hook '(lambda ()
 ;;     (pretty-lambda-mode 1)))
 
-(setq jedi:setup-keys t)
-(setq jedi:complete-on-dot t)
-(add-hook 'python-mode-hook 'jedi:setup)
-(require 'jedi-direx)
-(add-hook 'jedi-mode-hook 'jedi-direx:setup)
+(eval-after-load "company"
+  '(add-to-list 'company-backends '(company-anaconda :with company-capf)))
+(add-hook 'python-mode-hook 'anaconda-mode)
+
+
+;; --- c/c++ ---
+(add-hook 'c++-mode-hook 'irony-mode)
+(add-hook 'c-mode-hook 'irony-mode)
+(add-hook 'objc-mode-hook 'irony-mode)
+(add-to-list 'auto-mode-alist '("\\.ino\\'" . c++-mode))
 
 ;; theme
-(set-face-font 'default "Inconsolata-14")
+(set-face-font 'default "Inconsolata-11")
 ;; (set-face-font 'default "-unknown-Inconsolata-normal-normal-normal-*-14-*-*-*-m-0-iso10646-1")
 ;; (set-fontset-font "fontset-default"
 ;;                   (cons (decode-char 'ucs #x0400)
